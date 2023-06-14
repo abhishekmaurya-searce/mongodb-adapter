@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 )
@@ -14,7 +13,7 @@ type Times struct {
 func main() {
 	str := os.Args
 	// Read the JSON file
-	fileBytes, err := ioutil.ReadFile("./times.json")
+	fileBytes, err := os.ReadFile("./times.json")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,7 +35,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = ioutil.WriteFile("./times.json", updatedJSON, 0644)
+		err = os.WriteFile("./times.json", updatedJSON, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
