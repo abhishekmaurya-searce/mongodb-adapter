@@ -1,56 +1,46 @@
 package main
 
 import (
-	"context"
-	"fmt"
+	"encoding/json"
+	"io/ioutil"
+	"log"
 	"os"
-
-	//spanner "cloud.google.com/go/spanner/apiv1"
-
-	"github.com/pratikdhanavesearce/mongodb-adapter/cloudspanner"
-	"github.com/pratikdhanavesearce/mongodb-adapter/mongodb"
 )
+
+type Times struct {
+	N int `json:"n"`
+}
 
 func main() {
 	str := os.Args
-	//fmt.Println(str)
-	mongo_client, err := mongodb.NewConnection(str[1])
+	// Read the JSON file
+	fileBytes, err := ioutil.ReadFile("./times.json")
 	if err != nil {
-		fmt.Println("Error: ", err)
+		log.Fatal(err)
 	}
-	db := mongo_client.Database(str[2])
-	collections, err := mongodb.ListCollection(db)
+
+	// Create a variable to hold the parsed data
+	var time Times
+
+	// Unmarshal the JSON data into the variable
+	err = json.Unmarshal(fileBytes, &time)
 	if err != nil {
-		fmt.Println("Error: ", err)
+		log.Fatal(err)
 	}
-	for _, coll := range collections {
-		fmt.Println(coll)
-	}
-	err = mongodb.Head(mongo_client.Database(str[2]).Collection(collections[0]))
-	if err != nil {
-		fmt.Println("Error: ", err)
-	}
-	people, err := mongodb.Retrive(mongo_client.Database(str[2]).Collection(collections[0]))
-	if err != nil {
-		fmt.Println("Error: ", err)
-	}
-	for _, value := range people {
-		fmt.Println(value)
-	}
-	//fmt.Println(mongo_client)
-	//x := mongo_client.Database(str[2]).Collection(collections[0])
-	mongo_client.Disconnect(context.TODO())
-	//ctx := context.TODO()
-	connection_string := str[3]
-	// err = cloudspanner.CreateTable("person", connection_string)
-	// if err != nil {
-	// 	fmt.Println("Error :", err)
-	// }
-	// if err = cloudspanner.Insert(connection_string, people); err != nil {
-	// 	fmt.Println("Insertion Error:", err)
-	// }
-	err = cloudspanner.Read(connection_string)
-	if err != nil {
-		fmt.Println("Error :", err)
+	if time.N == 1 {
+		FileCreationsPart(str)
+		time.N = 2
+
+		// Marshal the updated data back to JSON
+		updatedJSON, err := json.MarshalIndent(time, "", "  ")
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = ioutil.WriteFile("./times.json", updatedJSON, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if time.N == 2 {
+		RetriveAndInsertPart(str)
 	}
 }

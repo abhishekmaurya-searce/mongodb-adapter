@@ -1,41 +1,11 @@
-# mongodb-adapter
-
-## Table of Contents
-
-- [mongodb-adapter](#mongodb-adapter)
-  - [Table of Contents](#table-of-contents)
-  - [About ](#about-)
-  - [Getting Started ](#getting-started-)
-    - [Prerequisites](#prerequisites)
-    - [Installing](#installing)
-      - [Go download and install](#go-download-and-install)
-      - [Podman download and install](#podman-download-and-install)
-      - [Make install](#make-install)
-
-## About <a name = "about"></a>
-
-MongoDB adapter to migrate data from MongoDB to Google Cloud Spanner. While requring the structure/schema of mongosb database.
-
-## Getting Started <a name = "getting_started"></a>
-
-- Run `go mod tidy` to install neccesery libraries required.
-- Run MAKE commands in the sequential matter as provided in the MAKEFILE.
-- Instruction while executing `gorun command`:
-      - `make gorun MONGODB_ADDRESS=<YOUR MONGO DATABASE ADDRESS LINK> MONGODB_DATABASE=<YOUR MONGO DATABASE NAME>`
-
-
-### Prerequisites
-
-- Golang 1.15 or above
-- Docker/podman
-- Make
-### Installing
-#### Go download and install
-    [Golang Installation](https://golang.org/dl/)
-#### Podman download and install
-    For MAC, if HOMEREW is installed:
-        `brew install podman`
-    For other OS refer:
-        [Podman installation](https://podman.io/docs/installation)
-#### Make install
-    `brew install make`
+# mongo-adapter
+    Currently I have tested it on one mongo database but I have designed it to handle any mongo database without the nesting, nesting I will implement after I test it on other databases.
+## Prereq
+    Golang v1.19,podman,make
+## Steps for runnning
+    Step 0: `go mod tidy`, in cmd/library/part2.go file delete everything but the function signature
+    Step 1: `make gorun`
+    step 2: `make emulator_run`
+    step 3: In another terminal at same directry `make gorun`
+    step 4: To check if inserted `make spanner_cli` it will take to to spanner command line interface
+    step 5: Write SQL quries to show items `SELECT * FROM author;` `SELECT * FROM books`

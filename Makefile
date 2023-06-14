@@ -5,6 +5,6 @@ spanner_cli:
 gorun:
 	#mongodb+srv://abhishekmaurya:abhishek@clusterblog.r9oxx61.mongodb.net 
 	#library_management 
-	go run cmd/library/main.go $(MONGO_ADDRESS) $(MONGO_DATABASE) projects/spanner-project/instances/spanner-instance/databases/spanner-database
+	go run cmd/library/*.go mongodb+srv://abhishekmaurya:abhishek@clusterblog.r9oxx61.mongodb.net library_management projects/spanner-project/instances/spanner-instance/databases/spanner-database
 
-.PHONY: emulator_run,spanner_cli,gorun
+.PHONY: emulator_run spanner_cli gorun

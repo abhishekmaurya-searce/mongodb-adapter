@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
+	"strings"
 
 	"cloud.google.com/go/spanner"
-	"github.com/pratikdhanavesearce/mongodb-adapter/model"
-	"google.golang.org/api/iterator"
+	//"github.com/pratikdhanavesearce/mongodb-adapter/view"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func NewConnection(uri string) (*spanner.Client, error) {
@@ -16,6 +18,7 @@ func NewConnection(uri string) (*spanner.Client, error) {
 		fmt.Println("Error while setting environment variable: ")
 		return nil, err
 	}
+
 	client, err := spanner.NewClient(context.TODO(), uri)
 	if err != nil {
 		fmt.Println("Error: While creating client: ")
@@ -23,69 +26,94 @@ func NewConnection(uri string) (*spanner.Client, error) {
 	}
 	return client, nil
 }
-func Insert(uri string, data []model.Person) error {
-	client, err := NewConnection(uri)
-	if err != nil {
-		fmt.Println("Error in connecting to spanner: ")
-	}
-	for _, value := range data {
-		_, err = client.Apply(context.TODO(), []*spanner.Mutation{
-			spanner.Insert("person",
-				[]string{"id", "firstname", "lastname", "age"},
-				[]interface{}{int64(value.Id), value.First, value.Last, int64(value.Age)})})
-		if err != nil {
-			fmt.Println("Error: ", err)
+
+//	func Insert(table string, data []view.Author, client *spanner.Client, ctx context.Context) error {
+//		for _, value := range data {
+//			mut, err := spanner.InsertStruct(table, value)
+//			if err != nil {
+//				fmt.Println("Error in inserting Struct: ")
+//				return err
+//			}
+//			_, err = client.Apply(context.TODO(), []*spanner.Mutation{mut})
+//			if err != nil {
+//				fmt.Println("Error: ", err)
+//			}
+//		}
+//		fmt.Println("Inserted", len(data), "Rows")
+//		return nil
+//	}
+func SqlScripts(table string, result bson.M) string {
+	s := fmt.Sprintf(`
+CREATE TABLE %s(`, table)
+	for key, value := range result {
+		if key == "_id" {
+			key = "Mongo_id"
 		}
+		value_type := getSpannerDataType(reflect.TypeOf(value).String())
+		s += fmt.Sprintf(`
+	%s %s,`, strings.ToLower(key), value_type)
 	}
-	fmt.Println("Inserted", len(data), "Rows")
-	return nil
+	s += `
+	) PRIMARY KEY (mongo_id);`
+	return s
 }
-func Read(uri string) error {
-	client, err := NewConnection(uri)
-	if err != nil {
-		fmt.Println("Error: Cant'read:")
+
+func getSpannerDataType(goDataType string) string {
+	switch goDataType {
+	case "string":
+		return "STRING(MAX)"
+	case "int64":
+		return "INT64"
+	case "int32":
+		return "INT64"
+	case "float64":
+		return "FLOAT64"
+	case "float32":
+		return "FLOAT64"
+	case "bool":
+		return "BOOL"
+	case "time.Time":
+		return "TIMESTAMP"
+	case "[]byte":
+		return "BYTES(MAX)"
+	case "primitive.Timestamp":
+		return "TIMESTAMP"
+	case "primitive.ObjectID":
+		return "STRING(24)"
+	default:
+		return "STRING(MAX)"
 	}
-	//fmt.Println(client.DatabaseName())
-	dml := spanner.NewStatement("SELECT * FROM person;")
-	iter := client.Single().Query(context.TODO(), dml)
-	for {
-		//fmt.Println(iter.Next())
-		row, err := iter.Next()
-		// var person model.Person
-		// if err = row.ToStruct(&person); err != nil {
-		// 	fmt.Println("Error in getting rows")
-		// 	return err
-		// }
-		// fmt.Println(person)
-		if row != nil {
-			fmt.Println(row)
-		}
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			fmt.Println("Error in itterating over rows: ", err)
-			return err
-		}
-		//var i int
-	}
-	iter.Stop()
-	return nil
 }
-func CreateTable(tablename, uri string) error {
-	client, err := NewConnection(uri)
+
+func InsertScripts(tables []string) string {
+	code := `package view
+
+import (
+	"fmt"
+
+	"cloud.google.com/go/spanner"
+)
+
+type Collection interface {
+	InsertSpanner(table string, client *spanner.Client) (*spanner.Mutation, error)
+}
+`
+	for _, value := range tables {
+		value = strings.ToUpper(string(value[0])) + value[1:]
+		code += fmt.Sprintf(`
+func (data *%s) InsertSpanner(table string, client *spanner.Client) (*spanner.Mutation, error) {
+	mut, err := spanner.InsertStruct(table, data)
 	if err != nil {
-		fmt.Println("Error :", err)
+		fmt.Println("Error in inserting Struct: ")
+		return nil, err
 	}
-	dml := spanner.NewStatement(`
-		CREATE TABLE ` + tablename + ` (
-			id INT64,
-			firstname STRING(MAX),
-			lastname STRING(MAX),
-			age INT64,
-			PRIMARY KEY (id)
-		)	`)
-	client.Single().Query(context.TODO(), dml)
-	fmt.Println("Table Created")
-	return nil
+	return mut, nil
+}
+		`, value)
+	}
+	code += `
+func Insert(table Collection, collection string, client *spanner.Client) (*spanner.Mutation, error) {
+	return table.InsertSpanner(collection, client)
+}`
+	return code
 }

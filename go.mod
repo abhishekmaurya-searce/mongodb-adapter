@@ -5,7 +5,6 @@ go 1.19
 require (
 	cloud.google.com/go/spanner v1.46.0
 	go.mongodb.org/mongo-driver v1.11.6
-	google.golang.org/api v0.118.0
 )
 
 require (
@@ -40,6 +39,7 @@ require (
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
+	google.golang.org/api v0.118.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	google.golang.org/grpc v1.55.0 // indirect
