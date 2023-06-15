@@ -3,7 +3,7 @@
 ## Prereq
     Golang v1.19,podman,make
 ## Steps for runnning
-    Step 0: `go mod tidy`, in cmd/library/part2.go file delete everything but the function signature
+    Step 0: `go mod tidy`, in cmd/library/part2.go file delete everything but the function signature and make "n"==1 in times.json file.
     Step 1: `make gorun`
     step 2: `make emulator_run`
     step 3: In another terminal at same directry `make gorun`
