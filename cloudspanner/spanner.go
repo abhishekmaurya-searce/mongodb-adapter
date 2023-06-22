@@ -78,8 +78,18 @@ func getSpannerDataType(goDataType string) string {
 		return "BYTES(MAX)"
 	case "primitive.Timestamp":
 		return "TIMESTAMP"
+	case "primitive.DateTime":
+		return "TIMESTAMP"
 	case "primitive.ObjectID":
 		return "STRING(24)"
+	case "primitive.Symbol":
+		return "STRING(MAX)"
+	case "Primitive.Binary":
+		return "STRING(MAX)"
+	case "primitive.Regex":
+		return "STRING(MAX)"
+	case "primitve.CodeWithScope":
+		return "STRING(MAX)"
 	default:
 		return "STRING(MAX)"
 	}

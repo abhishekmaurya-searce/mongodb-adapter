@@ -79,17 +79,7 @@ func CollectionToStruct(collection mongo.Collection, ctx context.Context, val st
 	code += fmt.Sprintf(`type %s struct{
 	`, (strings.ToUpper(string(val[0])) + val[1:]))
 	for key, value := range result {
-		key = strings.ToUpper(string(key[0])) + key[1:]
-		if reflect.TypeOf(value).String() == "primitive.ObjectID" {
-			code += fmt.Sprintf(`%s %s %s:"%s`+`"`+"`"+`
-	`, "Mongo_id", "string", "`bson", key)
-		} else if reflect.TypeOf(value).String() == "int32" {
-			code += fmt.Sprintf(`%s %s %s:"%s`+`"`+"`"+`
-			`, key, "int64", "`bson", key)
-		} else {
-			code += fmt.Sprintf(`%s %s %s:"%s`+`"`+"`"+`
-	`, key, reflect.TypeOf(value), "`bson", key)
-		}
+		code += structcode(key, value)
 	}
 	code += `
 }
@@ -97,31 +87,77 @@ func CollectionToStruct(collection mongo.Collection, ctx context.Context, val st
 	sql_code += cloudspanner.SqlScripts(val, result)
 	return code, sql_code
 }
-
+func structcode(key string, value interface{}) string {
+	structkey := strings.ToUpper(string(key[0])) + key[1:]
+	value_type := reflect.TypeOf(value).String()
+	if value_type == "primitive.Timestamp" || value_type == "primitive.DateTime" {
+		return fmt.Sprintf(`%s %s %s:"%s`+`"`+"`"+`
+		`, structkey, "time.Time", "`bson", key)
+	} else if value_type == "primitive.ObjectID" && key == "_id" {
+		return fmt.Sprintf(`%s %s %s:"%s`+`"`+"`"+`
+		`, "Mongo_id", "string", "`bson", key)
+	} else if value_type == "primitive.ObjectID" || value_type == "primitive.Symbol" || value_type == "primitive.CodeWithScope" || value_type == "primitive.Binary" || value_type == "primitive.Regex" {
+		return fmt.Sprintf(`%s %s %s:"%s`+`"`+"`"+`
+		`, structkey, "string", "`bson", key)
+	} else if value_type == "int32" {
+		return fmt.Sprintf(`%s %s %s:"%s`+`"`+"`"+`
+		`, structkey, "int64", "`bson", key)
+	} else {
+		return fmt.Sprintf(`%s %s %s:"%s`+`"`+"`"+`
+		`, structkey, value_type, "`bson", key)
+	}
+}
 func RetriveCollection(collection []string) string {
 	retrive_code := `package mongodb
-	import (
-		"github.com/pratikdhanavesearce/mongodb-adapter/view"
-		"context"
+import (
+	"context"
+	"encoding/json"
+	"reflect"
 	
-		"go.mongodb.org/mongo-driver/bson"
-		"go.mongodb.org/mongo-driver/mongo"
+	"github.com/pratikdhanavesearce/mongodb-adapter/view"
+	
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	)`
 	for _, val := range collection {
 		val = strings.ToUpper(string(val[0])) + val[1:]
 		retrive_code += fmt.Sprintf(`
 func Retrive_%s(db *mongo.Collection) ([]view.%s, error) {
-	cursor, err := db.Find(context.TODO(), bson.D{})
+	cursor, err := db.Find(context.TODO(), bson.M{})
 	var data []view.%s
 	if err != nil {
 		return data, err
 	}
-	err = cursor.All(context.TODO(), &data)
-	if err != nil {
-		return data, err
+	for cursor.Next(context.TODO()) {
+		var doc bson.M
+		if err = cursor.Decode(&doc); err != nil {
+			return data,err
+		}
+		modified := bson.M{}
+		for key, value := range doc {
+			type_value := reflect.TypeOf(value).String()
+			if type_value == "primitive.Binary" || type_value == "primitive.Regex" || type_value == "primitive.CodeWithScope" {
+				jsondata, err := json.Marshal(value)
+				if err != nil {
+					return data,err
+				}
+				value = string(jsondata)
+			}
+			modified[key] = value
+		}
+		var temp view.%s
+		document, err := bson.Marshal(modified)
+		if err != nil {
+			return data,err
+		}
+		err = bson.Unmarshal(document, &temp)
+		if err != nil {
+			return data,err
+		}
+		data = append(data, temp)
 	}
 	return data, nil
-}`, val, val, val)
+}`, val, val, val, val)
 	}
 
 	return retrive_code

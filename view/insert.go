@@ -37,6 +37,15 @@ func (data *Borrower) InsertSpanner(table string, client *spanner.Client) (*span
 	return mut, nil
 }
 		
+func (data *Test) InsertSpanner(table string, client *spanner.Client) (*spanner.Mutation, error) {
+	mut, err := spanner.InsertStruct(table, data)
+	if err != nil {
+		fmt.Println("Error in inserting Struct: ")
+		return nil, err
+	}
+	return mut, nil
+}
+		
 func (data *Borrow) InsertSpanner(table string, client *spanner.Client) (*spanner.Mutation, error) {
 	mut, err := spanner.InsertStruct(table, data)
 	if err != nil {

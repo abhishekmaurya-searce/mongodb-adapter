@@ -14,7 +14,7 @@ services:
         INSTANCE_NAME: "spanner-instance"
         DATABASE_NAME: "spanner-database"
       volumes:
-        - /Users/abhishekmaurya/Desktop/OOPS/mongodb-adapter/migration/up.sql:/up.sql
+        - ./migration/up.sql:/up.sql
       command: >
        bash -c 'gcloud config configurations create emulator-config &&
                gcloud config set auth/disable_credentials true &&
