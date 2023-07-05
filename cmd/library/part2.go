@@ -26,95 +26,99 @@ func RetriveAndInsertPart(str []string) {
 	}
 	for _, table := range collections {
 		switch table {
-			
-			case "author":arr, err := mongodb.Retrive_Author(db.Collection(table))
-			fmt.Println("Inserting into ", table)
-			if err != nil {
-				fmt.Println("Error in retriving data", err)
-			}
-			var mut []*spanner.Mutation
-			for _, value := range arr {
-				temp, err := view.Insert(&value, table, spanner_client)
-				if err != nil {
-					fmt.Println(err)
-				}
-				mut = append(mut, temp)
-			}
-			_, err = spanner_client.Apply(context.TODO(), mut)
-			if err != nil {
-				fmt.Println("Error: ", err)
-			}
-			case "books":arr, err := mongodb.Retrive_Books(db.Collection(table))
-			fmt.Println("Inserting into ", table)
-			if err != nil {
-				fmt.Println("Error in retriving data", err)
-			}
-			var mut []*spanner.Mutation
-			for _, value := range arr {
-				temp, err := view.Insert(&value, table, spanner_client)
-				if err != nil {
-					fmt.Println(err)
-				}
-				mut = append(mut, temp)
-			}
-			_, err = spanner_client.Apply(context.TODO(), mut)
-			if err != nil {
-				fmt.Println("Error: ", err)
-			}
-			case "borrower":arr, err := mongodb.Retrive_Borrower(db.Collection(table))
-			fmt.Println("Inserting into ", table)
-			if err != nil {
-				fmt.Println("Error in retriving data", err)
-			}
-			var mut []*spanner.Mutation
-			for _, value := range arr {
-				temp, err := view.Insert(&value, table, spanner_client)
-				if err != nil {
-					fmt.Println(err)
-				}
-				mut = append(mut, temp)
-			}
-			_, err = spanner_client.Apply(context.TODO(), mut)
-			if err != nil {
-				fmt.Println("Error: ", err)
-			}
-			case "test":arr, err := mongodb.Retrive_Test(db.Collection(table))
-			fmt.Println("Inserting into ", table)
-			if err != nil {
-				fmt.Println("Error in retriving data", err)
-			}
-			var mut []*spanner.Mutation
-			for _, value := range arr {
-				temp, err := view.Insert(&value, table, spanner_client)
-				if err != nil {
-					fmt.Println(err)
-				}
-				mut = append(mut, temp)
-			}
-			_, err = spanner_client.Apply(context.TODO(), mut)
-			if err != nil {
-				fmt.Println("Error: ", err)
-			}
-			case "borrow":arr, err := mongodb.Retrive_Borrow(db.Collection(table))
-			fmt.Println("Inserting into ", table)
-			if err != nil {
-				fmt.Println("Error in retriving data", err)
-			}
-			var mut []*spanner.Mutation
-			for _, value := range arr {
-				temp, err := view.Insert(&value, table, spanner_client)
-				if err != nil {
-					fmt.Println(err)
-				}
-				mut = append(mut, temp)
-			}
-			_, err = spanner_client.Apply(context.TODO(), mut)
-			if err != nil {
-				fmt.Println("Error: ", err)
-			}
-	}
-}
-spanner_client.Close()
-mongo_client.Disconnect(context.TODO())
-}
 
+		case "author":
+			arr, err := mongodb.Retrive_Author(db.Collection(table))
+			fmt.Println("Inserting into ", table)
+			if err != nil {
+				fmt.Println("Error in retriving data", err)
+			}
+			var mut []*spanner.Mutation
+			for _, value := range arr {
+				temp, err := view.Insert(&value, table, spanner_client)
+				if err != nil {
+					fmt.Println(err)
+				}
+				mut = append(mut, temp)
+			}
+			_, err = spanner_client.Apply(context.TODO(), mut)
+			if err != nil {
+				fmt.Println("Error: ", err)
+			}
+		case "books":
+			arr, err := mongodb.Retrive_Books(db.Collection(table))
+			fmt.Println("Inserting into ", table)
+			if err != nil {
+				fmt.Println("Error in retriving data", err)
+			}
+			var mut []*spanner.Mutation
+			for _, value := range arr {
+				temp, err := view.Insert(&value, table, spanner_client)
+				if err != nil {
+					fmt.Println(err)
+				}
+				mut = append(mut, temp)
+			}
+			_, err = spanner_client.Apply(context.TODO(), mut)
+			if err != nil {
+				fmt.Println("Error: ", err)
+			}
+		case "borrower":
+			arr, err := mongodb.Retrive_Borrower(db.Collection(table))
+			fmt.Println("Inserting into ", table)
+			if err != nil {
+				fmt.Println("Error in retriving data", err)
+			}
+			var mut []*spanner.Mutation
+			for _, value := range arr {
+				temp, err := view.Insert(&value, table, spanner_client)
+				if err != nil {
+					fmt.Println(err)
+				}
+				mut = append(mut, temp)
+			}
+			_, err = spanner_client.Apply(context.TODO(), mut)
+			if err != nil {
+				fmt.Println("Error: ", err)
+			}
+		case "test":
+			arr, err := mongodb.Retrive_Test(db.Collection(table))
+			fmt.Println("Inserting into ", table)
+			if err != nil {
+				fmt.Println("Error in retriving data", err)
+			}
+			var mut []*spanner.Mutation
+			for _, value := range arr {
+				temp, err := view.Insert(&value, table, spanner_client)
+				if err != nil {
+					fmt.Println(err)
+				}
+				mut = append(mut, temp)
+			}
+			_, err = spanner_client.Apply(context.TODO(), mut)
+			if err != nil {
+				fmt.Println("Error: ", err)
+			}
+		case "borrow":
+			arr, err := mongodb.Retrive_Borrow(db.Collection(table))
+			fmt.Println("Inserting into ", table)
+			if err != nil {
+				fmt.Println("Error in retriving data", err)
+			}
+			var mut []*spanner.Mutation
+			for _, value := range arr {
+				temp, err := view.Insert(&value, table, spanner_client)
+				if err != nil {
+					fmt.Println(err)
+				}
+				mut = append(mut, temp)
+			}
+			_, err = spanner_client.Apply(context.TODO(), mut)
+			if err != nil {
+				fmt.Println("Error: ", err)
+			}
+		}
+	}
+	spanner_client.Close()
+	mongo_client.Disconnect(context.TODO())
+}

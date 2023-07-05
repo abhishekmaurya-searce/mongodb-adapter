@@ -1,14 +1,16 @@
 package mongodb
+
 import (
 	"context"
 	"encoding/json"
 	"reflect"
-	
+
 	"github.com/pratikdhanavesearce/mongodb-adapter/view"
-	
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	)
+)
+
 func Retrive_Author(db *mongo.Collection) ([]view.Author, error) {
 	cursor, err := db.Find(context.TODO(), bson.M{})
 	var data []view.Author
@@ -18,7 +20,7 @@ func Retrive_Author(db *mongo.Collection) ([]view.Author, error) {
 	for cursor.Next(context.TODO()) {
 		var doc bson.M
 		if err = cursor.Decode(&doc); err != nil {
-			return data,err
+			return data, err
 		}
 		modified := bson.M{}
 		for key, value := range doc {
@@ -26,7 +28,7 @@ func Retrive_Author(db *mongo.Collection) ([]view.Author, error) {
 			if type_value == "primitive.Binary" || type_value == "primitive.Regex" || type_value == "primitive.CodeWithScope" {
 				jsondata, err := json.Marshal(value)
 				if err != nil {
-					return data,err
+					return data, err
 				}
 				value = string(jsondata)
 			}
@@ -35,11 +37,11 @@ func Retrive_Author(db *mongo.Collection) ([]view.Author, error) {
 		var temp view.Author
 		document, err := bson.Marshal(modified)
 		if err != nil {
-			return data,err
+			return data, err
 		}
 		err = bson.Unmarshal(document, &temp)
 		if err != nil {
-			return data,err
+			return data, err
 		}
 		data = append(data, temp)
 	}
@@ -54,7 +56,7 @@ func Retrive_Books(db *mongo.Collection) ([]view.Books, error) {
 	for cursor.Next(context.TODO()) {
 		var doc bson.M
 		if err = cursor.Decode(&doc); err != nil {
-			return data,err
+			return data, err
 		}
 		modified := bson.M{}
 		for key, value := range doc {
@@ -62,7 +64,7 @@ func Retrive_Books(db *mongo.Collection) ([]view.Books, error) {
 			if type_value == "primitive.Binary" || type_value == "primitive.Regex" || type_value == "primitive.CodeWithScope" {
 				jsondata, err := json.Marshal(value)
 				if err != nil {
-					return data,err
+					return data, err
 				}
 				value = string(jsondata)
 			}
@@ -71,11 +73,11 @@ func Retrive_Books(db *mongo.Collection) ([]view.Books, error) {
 		var temp view.Books
 		document, err := bson.Marshal(modified)
 		if err != nil {
-			return data,err
+			return data, err
 		}
 		err = bson.Unmarshal(document, &temp)
 		if err != nil {
-			return data,err
+			return data, err
 		}
 		data = append(data, temp)
 	}
@@ -90,7 +92,7 @@ func Retrive_Borrower(db *mongo.Collection) ([]view.Borrower, error) {
 	for cursor.Next(context.TODO()) {
 		var doc bson.M
 		if err = cursor.Decode(&doc); err != nil {
-			return data,err
+			return data, err
 		}
 		modified := bson.M{}
 		for key, value := range doc {
@@ -98,7 +100,7 @@ func Retrive_Borrower(db *mongo.Collection) ([]view.Borrower, error) {
 			if type_value == "primitive.Binary" || type_value == "primitive.Regex" || type_value == "primitive.CodeWithScope" {
 				jsondata, err := json.Marshal(value)
 				if err != nil {
-					return data,err
+					return data, err
 				}
 				value = string(jsondata)
 			}
@@ -107,11 +109,11 @@ func Retrive_Borrower(db *mongo.Collection) ([]view.Borrower, error) {
 		var temp view.Borrower
 		document, err := bson.Marshal(modified)
 		if err != nil {
-			return data,err
+			return data, err
 		}
 		err = bson.Unmarshal(document, &temp)
 		if err != nil {
-			return data,err
+			return data, err
 		}
 		data = append(data, temp)
 	}
@@ -126,7 +128,7 @@ func Retrive_Test(db *mongo.Collection) ([]view.Test, error) {
 	for cursor.Next(context.TODO()) {
 		var doc bson.M
 		if err = cursor.Decode(&doc); err != nil {
-			return data,err
+			return data, err
 		}
 		modified := bson.M{}
 		for key, value := range doc {
@@ -134,7 +136,7 @@ func Retrive_Test(db *mongo.Collection) ([]view.Test, error) {
 			if type_value == "primitive.Binary" || type_value == "primitive.Regex" || type_value == "primitive.CodeWithScope" {
 				jsondata, err := json.Marshal(value)
 				if err != nil {
-					return data,err
+					return data, err
 				}
 				value = string(jsondata)
 			}
@@ -143,11 +145,11 @@ func Retrive_Test(db *mongo.Collection) ([]view.Test, error) {
 		var temp view.Test
 		document, err := bson.Marshal(modified)
 		if err != nil {
-			return data,err
+			return data, err
 		}
 		err = bson.Unmarshal(document, &temp)
 		if err != nil {
-			return data,err
+			return data, err
 		}
 		data = append(data, temp)
 	}
@@ -162,7 +164,7 @@ func Retrive_Borrow(db *mongo.Collection) ([]view.Borrow, error) {
 	for cursor.Next(context.TODO()) {
 		var doc bson.M
 		if err = cursor.Decode(&doc); err != nil {
-			return data,err
+			return data, err
 		}
 		modified := bson.M{}
 		for key, value := range doc {
@@ -170,7 +172,7 @@ func Retrive_Borrow(db *mongo.Collection) ([]view.Borrow, error) {
 			if type_value == "primitive.Binary" || type_value == "primitive.Regex" || type_value == "primitive.CodeWithScope" {
 				jsondata, err := json.Marshal(value)
 				if err != nil {
-					return data,err
+					return data, err
 				}
 				value = string(jsondata)
 			}
@@ -179,11 +181,11 @@ func Retrive_Borrow(db *mongo.Collection) ([]view.Borrow, error) {
 		var temp view.Borrow
 		document, err := bson.Marshal(modified)
 		if err != nil {
-			return data,err
+			return data, err
 		}
 		err = bson.Unmarshal(document, &temp)
 		if err != nil {
-			return data,err
+			return data, err
 		}
 		data = append(data, temp)
 	}
