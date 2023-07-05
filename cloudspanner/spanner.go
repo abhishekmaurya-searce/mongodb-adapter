@@ -8,8 +8,10 @@ import (
 	"strings"
 
 	"cloud.google.com/go/spanner"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	//"github.com/pratikdhanavesearce/mongodb-adapter/view"
-	"go.mongodb.org/mongo-driver/bson"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func NewConnection(uri string) (*spanner.Client, error) {
@@ -42,24 +44,40 @@ func NewConnection(uri string) (*spanner.Client, error) {
 //		fmt.Println("Inserted", len(data), "Rows")
 //		return nil
 //	}
-func SqlScripts(table string, result bson.M) string {
+func SqlScripts(val []string, result bson.M) string {
+	table := strings.Join(val, "_")
 	s := fmt.Sprintf(`
-CREATE TABLE %s(`, table)
+CREATE TABLE %s(`, strings.ToLower(table))
+	if len(val) > 1 {
+		s += `
+	id STRING(24),`
+	}
 	for key, value := range result {
 		if key == "_id" {
-			key = "Mongo_id"
+			key = "id"
 		}
-		value_type := getSpannerDataType(reflect.TypeOf(value).String())
+		value_type := getSpannerDataType(value)
 		s += fmt.Sprintf(`
 	%s %s,`, strings.ToLower(key), value_type)
 	}
-	s += `
-	) PRIMARY KEY (mongo_id);`
+	if len(val) > 1 {
+		ref := strings.ToLower(strings.Join(val[0:len(val)-1], "_"))
+		s += fmt.Sprintf(`
+	%s_id STRING(24),
+	FOREIGN KEY (%s_id) REFERENCES %s (id) 
+	) PRIMARY KEY (id);`, ref, ref, ref)
+	} else {
+		s += `
+	) PRIMARY KEY (id);`
+	}
 	return s
 }
 
-func getSpannerDataType(goDataType string) string {
-	switch goDataType {
+func getSpannerDataType(goDataType interface{}) string {
+	value_type := reflect.TypeOf(goDataType).String()
+	switch value_type {
+	case "primitive.A":
+		return "ARRAY<" + getSpannerDataType(goDataType.(primitive.A)[0]) + ">"
 	case "string":
 		return "STRING(MAX)"
 	case "int64":

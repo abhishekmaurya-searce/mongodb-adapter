@@ -78,14 +78,18 @@ func FileCreationsPart(str []string) {
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
+	//fmt.Println("Mongo Connection Done")
 	db := mongo_client.Database(str[2])
+	//fmt.Println(db.Name())
 	collections, err := mongodb.ListCollection(db)
 	if err != nil {
 		fmt.Println("Error: ", err)
 	}
+	//fmt.Println("Got List of collections")
 	if err = util.FileCreate(ctx, db, collections); err != nil {
-		fmt.Println(err)
+		fmt.Println("Error: in file Creation: ", err)
 	}
+	//fmt.Println("all files created")
 	file_part2, err := os.Create("./cmd/library/part2.go")
 	part2_code := part2(collections)
 	if err != nil {
@@ -93,7 +97,7 @@ func FileCreationsPart(str []string) {
 	}
 	_, err = file_part2.WriteString(part2_code)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error: Writing file:", err)
 	}
 	file_part2.Close()
 	mongo_client.Disconnect(context.TODO())

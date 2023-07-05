@@ -8,10 +8,14 @@ import (
 	"github.com/pratikdhanavesearce/mongodb-adapter/cloudspanner"
 	"github.com/pratikdhanavesearce/mongodb-adapter/mongodb"
 	"go.mongodb.org/mongo-driver/mongo"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func FileCreate(ctx context.Context, db *mongo.Database, col []string) error {
 	code := `package view
+import (
+	"time"
+)
 `
 	file, err := os.Create("./view/schema.go")
 	if err != nil {
@@ -35,19 +39,24 @@ func FileCreate(ctx context.Context, db *mongo.Database, col []string) error {
 	}
 	var sql_code string
 	insert_code := cloudspanner.InsertScripts(col)
+	retrive_code := `
+package mongodb
+`
 	for _, val := range col {
-		collection := db.Collection(val)
-		code1, code2 := mongodb.CollectionToStruct(*collection, ctx, val)
+		var result bson.M
+		_ = db.Collection(val).FindOne(context.TODO(), bson.M{}).Decode(&result)
+		var tables []string
+		tables = append(tables, val)
+		code1, code2, code3 := mongodb.CollectionToStruct(result, tables)
 		code += code1
 		sql_code += code2
-
+		retrive_code += code3
 	}
 	_, err = file.WriteString(code)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	retrive_code := mongodb.RetriveCollection(col)
 	_, err = retrive.WriteString(retrive_code)
 	if err != nil {
 		fmt.Println(err)

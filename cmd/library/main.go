@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 )
@@ -27,6 +28,7 @@ func main() {
 		log.Fatal(err)
 	}
 	if time.N == 1 {
+		fmt.Println(str[1])
 		FileCreationsPart(str)
 		time.N = 2
 

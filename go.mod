@@ -7,6 +7,8 @@ require (
 	go.mongodb.org/mongo-driver v1.11.6
 )
 
+require github.com/google/uuid v1.3.0 // indirect
+
 require (
 	cloud.google.com/go v0.82.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -38,4 +40,5 @@ require (
 	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc // indirect
 	google.golang.org/grpc v1.52.0-dev // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
+	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 )

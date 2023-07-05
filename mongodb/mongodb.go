@@ -8,9 +8,10 @@ import (
 	"strings"
 
 	"github.com/pratikdhanavesearce/mongodb-adapter/cloudspanner"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func NewConnection(str string) (*mongo.Client, error) {
@@ -29,7 +30,7 @@ func NewConnection(str string) (*mongo.Client, error) {
 // Function for Geting all the Collection in the database
 func ListCollection(db *mongo.Database) ([]string, error) {
 
-	collections, err := db.ListCollectionNames(context.TODO(), bson.D{}) //Calling the function to get the names of Collection in the database
+	collections, err := db.ListCollectionNames(context.TODO(), bson.M{}) //Calling the function to get the names of Collection in the database
 	if err != nil {
 		log.Fatal(err)
 		return collections, err
@@ -71,21 +72,48 @@ func Head(db *mongo.Collection) error {
 // 	return data, nil
 // }
 
-func CollectionToStruct(collection mongo.Collection, ctx context.Context, val string) (string, string) {
+func CollectionToStruct(result bson.M, val []string) (string, string, string) {
 	var code string
 	var sql_code string
-	var result bson.M
-	_ = collection.FindOne(ctx, bson.M{}).Decode(&result)
-	code += fmt.Sprintf(`type %s struct{
-	`, (strings.ToUpper(string(val[0])) + val[1:]))
+	var retrive_code string
+	table := val[len(val)-1]
+	val[len(val)-1] = strings.ToUpper(string(table[0])) + table[1:]
+	name := strings.Join(val, "_")
+	code += fmt.Sprintf(`
+type %s struct{`, name)
+	if len(val) > 1 {
+		code += fmt.Sprintf(`
+	Id string
+	%s_id string
+	`, val[len(val)-2])
+	}
+	var nesting_code string
+	var nesting_code_sql string
+	var nesting_code_retrive string
 	for key, value := range result {
-		code += structcode(key, value)
+		value_type := reflect.TypeOf(value).String()
+		if value_type == "bson.M" {
+			str, sql, retr := CollectionToStruct(value.(bson.M), append(val, key))
+			nesting_code += str
+			nesting_code_sql += sql
+			nesting_code_retrive += retr
+		} else if value_type == "primitive.A" && reflect.TypeOf(value.(primitive.A)[0]).String() == "bson.M" {
+			str, sql, retr := CollectionToStruct(value.(primitive.A)[0].(bson.M), append(val, key))
+			nesting_code += str
+			nesting_code_sql += sql
+			nesting_code_retrive += retr
+		} else {
+			code += structcode(key, value)
+		}
 	}
 	code += `
 }
-`
+` + nesting_code
 	sql_code += cloudspanner.SqlScripts(val, result)
-	return code, sql_code
+	retrive_code += RetriveCollection2(val)
+	retrive_code += nesting_code_retrive
+	sql_code += nesting_code_sql
+	return code, sql_code, retrive_code
 }
 func structcode(key string, value interface{}) string {
 	structkey := strings.ToUpper(string(key[0])) + key[1:]
@@ -95,7 +123,7 @@ func structcode(key string, value interface{}) string {
 		`, structkey, "time.Time", "`bson", key)
 	} else if value_type == "primitive.ObjectID" && key == "_id" {
 		return fmt.Sprintf(`%s %s %s:"%s`+`"`+"`"+`
-		`, "Mongo_id", "string", "`bson", key)
+		`, "Id", "string", "`bson", key)
 	} else if value_type == "primitive.ObjectID" || value_type == "primitive.Symbol" || value_type == "primitive.CodeWithScope" || value_type == "primitive.Binary" || value_type == "primitive.Regex" {
 		return fmt.Sprintf(`%s %s %s:"%s`+`"`+"`"+`
 		`, structkey, "string", "`bson", key)
@@ -106,6 +134,69 @@ func structcode(key string, value interface{}) string {
 		return fmt.Sprintf(`%s %s %s:"%s`+`"`+"`"+`
 		`, structkey, value_type, "`bson", key)
 	}
+}
+
+func RetriveCollection2(tables []string) string {
+	var retrive_code string
+	var nested_doc string
+	for _, val := range tables {
+		nested_doc += "[\"" + val + "\"].(bson.M)"
+	}
+	table := strings.Join(tables, "_")
+	var atr string
+	var keys string
+	var i string
+	if len(tables) > 1 {
+		atr = `, ref []interface{}`
+		ref := strings.Join(tables[0:len(tables)-1], "_")
+		keys = fmt.Sprintf(`
+	modified["Id"]=uuid.New().String()
+	modified["%s_id"]=ref[i].(bson.M)["Id"]
+	i++`, ref)
+		i = `
+	i:=0`
+	}
+	retrive_code += fmt.Sprintf(`
+func Retrive_%s(db *mongo.Collection%s) ([]view.%s, error) {
+	cursor, err := db.Find(context.TODO(), bson.M{})
+	var data []view.%s
+	if err != nil {
+		return data, err
+	}
+	%s
+	for cursor.Next(context.TODO()) {
+		var doc bson.M
+		if err = cursor.Decode(&doc); err != nil {
+			return data,err
+		}
+		doc = doc`+nested_doc+`
+		modified := bson.M{}
+		for key, value := range doc {
+			type_value := reflect.TypeOf(value).String()
+			if type_value == "primitive.Binary" || type_value == "primitive.Regex" || type_value == "primitive.CodeWithScope" {
+				jsondata, err := json.Marshal(value)
+				if err != nil {
+					return data,err
+				}
+				value = string(jsondata)
+			}
+			modified[key] = value
+		}
+		%s
+		var temp view.%s
+		document, err := bson.Marshal(modified)
+		if err != nil {
+			return data,err
+		}
+		err = bson.Unmarshal(document, &temp)
+		if err != nil {
+			return data,err
+		}
+		data = append(data, temp)
+	}
+	return data, nil
+}`, table, atr, table, table, i, keys, table)
+	return retrive_code
 }
 func RetriveCollection(collection []string) string {
 	retrive_code := `package mongodb
