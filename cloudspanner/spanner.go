@@ -9,8 +9,6 @@ import (
 
 	"cloud.google.com/go/spanner"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
-	//"github.com/pratikdhanavesearce/mongodb-adapter/view"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -55,6 +53,9 @@ CREATE TABLE %s(`, strings.ToLower(table))
 	for key, value := range result {
 		if key == "_id" {
 			key = "id"
+		}
+		if reflect.TypeOf(value).String() == "bson.M" || (reflect.TypeOf(value).String() == "primitive.A" && reflect.TypeOf(value.(primitive.A)[0]).String() == "bson.M") {
+			continue
 		}
 		value_type := getSpannerDataType(value)
 		s += fmt.Sprintf(`
@@ -111,37 +112,4 @@ func getSpannerDataType(goDataType interface{}) string {
 	default:
 		return "STRING(MAX)"
 	}
-}
-
-func InsertScripts(tables []string) string {
-	code := `package view
-
-import (
-	"fmt"
-
-	"cloud.google.com/go/spanner"
-)
-
-type Collection interface {
-	InsertSpanner(table string, client *spanner.Client) (*spanner.Mutation, error)
-}
-`
-	for _, value := range tables {
-		value = strings.ToUpper(string(value[0])) + value[1:]
-		code += fmt.Sprintf(`
-func (data *%s) InsertSpanner(table string, client *spanner.Client) (*spanner.Mutation, error) {
-	mut, err := spanner.InsertStruct(table, data)
-	if err != nil {
-		fmt.Println("Error in inserting Struct: ")
-		return nil, err
-	}
-	return mut, nil
-}
-		`, value)
-	}
-	code += `
-func Insert(table Collection, collection string, client *spanner.Client) (*spanner.Mutation, error) {
-	return table.InsertSpanner(collection, client)
-}`
-	return code
 }
